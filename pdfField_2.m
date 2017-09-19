@@ -17,7 +17,7 @@ savename = ['Dist_11Years_',season,'.mat'];
 
 %% Plot
 % Initial state
-simyr  = 2006:2016;
+simyr  = 2008:2016;
 load([num2str(mod(simyr(end),100),'%02d'),'_BASE1.mat'])
 eval(['Dp = Depth',datestr(datenum(simyr(end)-1,11,1,0,0,0),'_yyyymmdd_HHMMSS'),'; clear(''Depth',datestr(datenum(simyr(end)-1,11,1,0,0,0),'_yyyymmdd_HHMMSS'),''')'])
 eval('wb = zeros(size(Xp(~isnan(Dp))));');
@@ -125,49 +125,54 @@ HS2  = ones(size(Xp)); HS2 = HS2 * NaN;
 Yavg    = EY_1./N;
 HS2(wb) = Yavg(:,1); 
 
-figure;
+figure(11);
 pcolor(Xp,Yp,HS2); shading interp; axis tight equal;
 colormap(jet); colorbar;
 caxis([0 3])
 title('Average of the distribution of significant wave height (2006-2016)')
+saveas(gcf,['FIGURE/Moment_Average.fig'])
 
 %   Variance
 Yvar = (EY_2 - 2*Yavg.*EY_1 + N*Yavg.^2 )./N;
 HS2(wb) = Yvar(:,1); 
 
-figure;
+figure(12);
 pcolor(Xp,Yp,HS2); shading interp; axis tight equal;
 colormap(jet); colorbar;
 title('Variance of the distribution of significant wave height (2006-2016)')
+saveas(gcf,['FIGURE/Moment_Variance.fig'])
 
 %   Standard deviation
 Ystd    = sqrt(Yvar);
 HS2(wb) = Ystd(:,1); 
 
-figure;
+figure(13);
 pcolor(Xp,Yp,HS2); shading interp; axis tight equal;
 colormap(jet); colorbar;
 title('Standard deviation of the distribution of significant wave height (2006-2016)')
+saveas(gcf,['FIGURE/Moment_StDev.fig'])
 
 %   Skewness
 Yske    = (EY_3 - 3*Yavg.*EY_2 + 3*Yavg.^2.*EY_1 - N*Yavg.^3)./N;
 Yske    = Yske./(Ystd.^3);
 HS2(wb) = Yske(:,1); 
 
-figure;
+figure(14);
 pcolor(Xp(1,:),Yp(:,1),HS2); shading interp; axis tight equal;
 colormap(jet); colorbar; caxis([0 5])
 title('Skewness of the distribution of significant wave height (2006-2016)')
+saveas(gcf,['FIGURE/Moment_Skewness.fig'])
 
 %   Kurtosis
 Ykur    = (EY_4 - 4*Yavg.*EY_3 + 6*Yavg.^2.*EY_2 - 4*Yavg.^3.*EY_1 + N*Yavg.^4)./N;
 Ykur    = Ykur./(Yvar.^2);
 HS2(wb) = Ykur(:,1); 
 
-figure;
+figure(15);
 pcolor(Xp,Yp,HS2); shading interp; axis tight equal;
 colormap(jet); colorbar; caxis([0 40])
 title('Kurtosis of the distribution of significant wave height (2006-2016)')
+saveas(gcf,'FIGURE/Moment_Kurtosis.fig')
 
 %% Detect the location of percentage distribution
 SWNdis.HS  = zeros(size(wb))*zeros(size(spanP));
@@ -202,7 +207,7 @@ for ii = 1 : length(spanP)
     pcolor(Xp,Yp,HS1); shading interp; axis tight equal;
     colormap(jet(128)); caxis([0 5+ii]); colorbar;
     title([num2str(spanP(ii),'%2.1f'),'-^{th} Percentile'])
-    saveas(gcf,['HS_',num2str(spanP(ii),'%2.1f'),'.fig'])
+    saveas(gcf,['FIGURE/HS_',num2str(spanP(ii),'%2.1f'),'.fig'])
     pause(0.5)
 end
 
@@ -251,7 +256,7 @@ if ii>1;
     
     HS_ = HS_/max(sum(SWNpdf.HS,2))*100;
     
-    fig1 = figure(1);
+    fig1 = figure(101);
     subplot(1,5,1:3)
     pcolor(Xp,Yp,Dp)
     shading interp;
@@ -315,4 +320,4 @@ mom.Yvar = Yvar;
 mom.Ystd = Ystd;
 mom.Yske = Yske;
 mom.Ykur = Ykur;
-save(savename,'SWNpdf','SWNdis','HSp','Yavg','Yvar','Ystd','Yske','Ykur','Xp','Yp','Dp','wb','span');
+save(savename,'SWNpdf','SWNdis','HSp','mom','Xp','Yp','Dp','wb','span');

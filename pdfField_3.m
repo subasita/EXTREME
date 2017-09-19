@@ -33,8 +33,58 @@ for ii = 1 : length(spanP)
     pause(0.5)
 end
 
+%%  Calculate moment
+N    =  max(sum(SWNpdf.HS,2));
+HS2  = ones(size(Xp)); HS2 = HS2 * NaN;
+
+%   Mean
+HS2(wb) = mom.Yavg(:,1); 
+
+figure(11);
+pcolor(Xp,Yp,HS2); shading interp; axis tight equal;
+colormap(jet); colorbar;
+caxis([0 3])
+title('Average of the distribution of significant wave height (2006-2016)')
+saveas(gcf,['FIGURE/Moment_Average.fig'])
+
+%   Variance
+HS2(wb) = mom.Yvar(:,1); 
+
+figure(12);
+pcolor(Xp,Yp,HS2); shading interp; axis tight equal;
+colormap(jet); colorbar;
+title('Variance of the distribution of significant wave height (2006-2016)')
+saveas(gcf,['FIGURE/Moment_Variance.fig'])
+
+%   Standard deviation
+HS2(wb) = mom.Ystd(:,1); 
+
+figure(13);
+pcolor(Xp,Yp,HS2); shading interp; axis tight equal;
+colormap(jet); colorbar;
+title('Standard deviation of the distribution of significant wave height (2006-2016)')
+saveas(gcf,['FIGURE/Moment_StDev.fig'])
+
+%   Skewness
+HS2(wb) = mom.Yske(:,1); 
+
+figure(14);
+pcolor(Xp(1,:),Yp(:,1),HS2); shading interp; axis tight equal;
+colormap(jet); colorbar; caxis([0 5])
+title('Skewness of the distribution of significant wave height (2006-2016)')
+saveas(gcf,['FIGURE/Moment_Skewness.fig'])
+
+%   Kurtosis
+HS2(wb) = mom.Ykur(:,1); 
+
+figure(15);
+pcolor(Xp,Yp,HS2); shading interp; axis tight equal;
+colormap(jet); colorbar; caxis([0 40])
+title('Kurtosis of the distribution of significant wave height (2006-2016)')
+saveas(gcf,'FIGURE/Moment_Kurtosis.fig')
+
 %% plotting
-scanning = 'Lat';
+scanning = 'Lon';
 Nn   = 2000;
 Amap = bone(Nn);
 xx   = linspace(1,0,Nn-1);
@@ -133,10 +183,11 @@ end
 
 
 %% plot at random position
-clc;
-PS  = [90.0, 20; 87.5, 0.0; 85.0, -20.0; 120.0, -15.0; 110.0, -5; 130.0, 20; 115.0, 15.0];
+clc; close all;
+PS  = [90.0, 20; 87.5, 0.0; 85.0, -20.0; 122.0, -15.0; 110.0, -5; 132.0, 25; 115.0, 18.0];
 dH2 = (spanH(2)-spanH(1))/2;
-y   = jet(length(spanH));
+y   = [jet(50);hot(76)];
+minx = [3.5,3,4,3,2,5,4.5];
 for ii = 1:length(PS(:,1))
     x  = find(xx==PS(ii,1)&yy==(PS(ii,2)));
     
@@ -146,12 +197,19 @@ for ii = 1:length(PS(:,1))
     
     
     % CDF of peaks
-    ecdf(SWNdis.HS(x,:)
-
+%     HS2   = sort(HSp{x,:});
+%     [f,v] = ecdf(HS2);
     % fit to weibull
-    im  = fit(spanH',HS1','1-exp(-((x-c)/a).^b)','StartPoint',[1,1,-1],'Lower',[0,0,-10],'Upper',[6,12,0])
-    HS3 = 1-exp(-((spanH-im.c)/im.a).^im.b);
+%     im  = fit(spanH',HS1','1 - exp(-((x)/a).^b)','StartPoint',[1,1],'Lower',[1,1],'Upper',[5,10])
+    modelFun =  @(p,x) 1 - exp( -( (x) /p(1) ) .^ p(2));
+    im   = nlinfit(spanH', HS1', modelFun,[5 3]);
+    HS3 = 1-exp(-((spanH)/im(1)).^im(2));
     HS2 = [0 HS3(2:end)-HS3(1:end-1)]; 
+    
+    % fit to GDP to POT
+%     im  = fit(double(v),double(f),'1-(1+b*(x-c)/a).^(-1/b)','StartPoint',[1,1,-1],'Lower',[0,0,-10],'Upper',[6,12,0])
+%     HS3 = 1-(1+im.b*(spanH-im.c)/im.a).^(-1/im.b);
+%     HS2 = [0 HS3(2:end)-HS3(1:end-1)];
     
     % Histogram HS
     figure(100+ii)
@@ -162,12 +220,15 @@ for ii = 1:length(PS(:,1))
         hold on;
     end
     
-    plot(spanH,HS2*100,'r','LineWidth',2);
+    text(5,10,['F(x) = ',num2str(im(2)/im(1),'%1.2f'),'(x/',num2str(im(1),'%1.2f'),')^{',num2str(im(2),'%1.2f'),'-1} exp(x/',num2str(im(1),'%1.2f'),')^{',num2str(im(2),'%1.2f'),'}']);
+    hold on;
+    plot(spanH,HS2*100,'m','LineWidth',2);
     hold off;
-    axis([0 10 0 10*ceil(max(HS2)*10)]);
+%     axis([minx(ii) minx(ii)+5 0 1]); %ceil(max(HS_(1,:)))*100]);
+    axis([0 10 0 ceil(max(HS_(1,:)*10))*10]);
     xlabel('Significant Wave Height [m]'); ylabel('Percentage Occurrence [%]')
     box on;
     title(['Percentage of occurrence of significant wave height (Hs) during 2006-2016 ',num2str(ii,'[%01d]')]);
-    saveas(gcf,['FIGURE/PDF location ',num2str(ii),'-zoom-',season,'.fig']);
+    saveas(gcf,['FIGURE/PDF location ',num2str(ii),'-',season,'.fig']);
 end
 
